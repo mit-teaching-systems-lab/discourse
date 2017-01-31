@@ -419,7 +419,7 @@ class UsersController < ApplicationController
       else
         @user.password = params[:password]
         @user.password_required!
-        @user.auth_token = nil
+        @user.user_auth_tokens.destroy_all
         if @user.save
           Invite.invalidate_for_email(@user.email) # invite link can't be used to log in anymore
           secure_session["password-#{token}"] = nil

@@ -6,6 +6,20 @@ class GlobalSetting
     end
   end
 
+  def self.safe_secret_token
+    @safe_secret_token ||= begin
+      token = secret_token
+      if token.blank? || token !~ /^[0-9a-f]{128}$/
+        token = $redis.without_namespace.get('SECRET_TOKEN')
+        unless token && token =~ /^[0-9a-f]{128}$/
+          token = SecureRandom.hex(64)
+          $redis.without_namespace.set('SECRET_TOKEN',token)
+        end
+      end
+      token
+    end
+  end
+
   def self.load_defaults
     default_provider = FileProvider.from(File.expand_path('../../../config/discourse_defaults.conf', __FILE__))
     default_provider.keys.concat(@provider.keys).uniq.each do |key|
