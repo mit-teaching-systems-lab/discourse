@@ -109,9 +109,9 @@ class Auth::DefaultCurrentUserProvider
     return if is_api? || !@env.key?(CURRENT_USER_KEY)
 
     if @user_token && @user_token.user == user
-      rotated_at = @user_token.rotated_at || @user_token.created_at
+      rotated_at = @user_token.rotated_at
 
-      needs_rotation = @user_token.auth_token_seen ? rotated_at < 10.minutes.ago : rotated_at < 1.minute.ago
+      needs_rotation = @user_token.auth_token_seen ? rotated_at < UserAuthToken::ROTATE_TIME.ago : rotated_at < UserAuthToken::URGENT_ROTATE_TIME.ago
 
       if !@user_token.legacy && needs_rotation && @user_token.rotate!
         cookies[TOKEN_COOKIE] = cookie_hash(@user_token.unhashed_auth_token)

@@ -2,6 +2,33 @@ require 'rails_helper'
 
 describe UserAuthToken do
 
+  it "can remove old expired tokens" do
+
+    freeze_time Time.zone.now
+    SiteSetting.maximum_session_age = 1
+
+    user = Fabricate(:user)
+    token = UserAuthToken.generate!(user_id: user.id,
+                                    user_agent: "some user agent 2",
+                                    client_ip: "1.1.2.3")
+
+    freeze_time 1.hour.from_now
+    UserAuthToken.cleanup!
+
+    expect(UserAuthToken.where(id: token.id).count).to eq(1)
+
+    freeze_time 1.second.from_now
+    UserAuthToken.cleanup!
+
+    expect(UserAuthToken.where(id: token.id).count).to eq(1)
+
+    freeze_time UserAuthToken::ROTATE_TIME.from_now
+    UserAuthToken.cleanup!
+
+    expect(UserAuthToken.where(id: token.id).count).to eq(0)
+
+  end
+
   it "can lookup both hashed and unhashed" do
     user = Fabricate(:user)
 

@@ -4,6 +4,10 @@ require 'digest/sha1'
 class UserAuthToken < ActiveRecord::Base
   belongs_to :user
 
+  ROTATE_TIME = 10.minutes
+  # used when token did not arrive at client
+  URGENT_ROTATE_TIME = 1.minute
+
   attr_accessor :unhashed_auth_token
 
   def self.generate!(info)
@@ -50,6 +54,14 @@ class UserAuthToken < ActiveRecord::Base
 
   def self.hash_token(token)
     Digest::SHA1.base64digest("#{token}#{GlobalSetting.safe_secret_token}")
+  end
+
+  def self.cleanup!
+    sql = <<SQL
+    DELETE FROM user_auth_tokens
+    WHERE rotated_at < :time
+SQL
+    exec_sql(sql, time: SiteSetting.maximum_session_age.hours.ago - ROTATE_TIME)
   end
 
   def rotate!(info=nil)

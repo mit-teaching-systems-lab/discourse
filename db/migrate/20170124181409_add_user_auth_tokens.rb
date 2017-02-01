@@ -23,7 +23,7 @@ SQL
       t.boolean :auth_token_seen, default: false, null: false
       t.boolean :legacy, default: false, null: false
       t.inet    :client_ip
-      t.datetime :rotated_at
+      t.datetime :rotated_at, null: false
       t.timestamps
     end
 
@@ -31,8 +31,8 @@ SQL
     add_index :user_auth_tokens, [:prev_auth_token]
 
     execute <<SQL
-    INSERT INTO user_auth_tokens(user_id, auth_token, prev_auth_token, legacy, created_at)
-    SELECT id, auth_token, auth_token, true, auth_token_updated_at
+    INSERT INTO user_auth_tokens(user_id, auth_token, prev_auth_token, legacy, created_at, rotated_at)
+    SELECT id, auth_token, auth_token, true, auth_token_updated_at, auth_token_updated_at
     FROM users
     WHERE auth_token_updated_at IS NOT NULL AND auth_token IS NOT NULL
 SQL

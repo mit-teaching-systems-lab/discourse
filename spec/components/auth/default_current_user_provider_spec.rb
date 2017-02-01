@@ -84,7 +84,9 @@ describe Auth::DefaultCurrentUserProvider do
     user = Fabricate(:user)
     token = SecureRandom.hex(16)
     user_token = UserAuthToken.create!(user_id: user.id, auth_token: token,
-                                       prev_auth_token: token, legacy: true)
+                                       prev_auth_token: token, legacy: true,
+                                       rotated_at: Time.zone.now
+                                      )
 
     prov = provider("/", "HTTP_COOKIE" => "_t=#{user_token.auth_token}")
     expect(prov.current_user.id).to eq(user.id)
